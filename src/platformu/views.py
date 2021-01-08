@@ -349,9 +349,15 @@ def admin_entity_form(request, organization, id=None):
         info.sectors.clear()
         if "sector" in request.POST:
             info.sectors.add(Sector.objects.get(pk=request.POST["sector"]))
-        if "tag" in request.GET:
-            tag = Tag.objects.get(pk=request.GET["tag"])
-            info.tags.add(tag)
+        # if "tag" in request.GET:
+        #     tag = Tag.objects.get(pk=request.GET["tag"])
+        #     info.tags.add(tag)
+
+        if "tags" in request.POST and request.POST.getlist("tags"):
+            for tag_id in request.POST.getlist("tags"):
+                tag = Tag.objects.get(pk=tag_id)
+                info.tags.add(tag)
+
 
         #Let remove all business links when the form is submitted    
         LocalBusinessLink.objects.filter(organization=info).delete()
@@ -393,7 +399,8 @@ def admin_entity_form(request, organization, id=None):
         "load_select2": True,
         "nace_codes": NaceCode.objects.all(),
         "dependency_list": LocalBusinessDependency.objects.all(),
-        "local_businesses": LocalBusinessLink.objects.filter(organization=info)
+        "local_businesses": LocalBusinessLink.objects.filter(organization=info),
+        "tags": Tag.objects.filter(belongs_to=organization, parent_tag__id=TAG_ID["platformu_segments"]).order_by("id"),
     }
     return render(request, "metabolism_manager/admin/entity.form.html", context)
 

@@ -140,6 +140,16 @@
             </div>
           </div>
 
+          <div class="form-group form-row">
+            <label for="location">Tags</label>
+            <select class="form-control" name="tags" multiple required>
+              {% for each in tags %}
+                <option value="{{ each.id }}">{{ each.name }}</option>
+              {% endfor %}
+            </select>
+            <p>Hold down the Ctrl (windows) or Command (Mac) button to select multiple options.</p>
+          </div>
+
           <hr>
 
           <h3>Market information</h3>
