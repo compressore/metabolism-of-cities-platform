@@ -521,6 +521,12 @@ class NaceCode(models.Model):
     class Meta:
         ordering = ["id"]
 
+class AvailableDataType(models.Model):
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name
+
 class Organization(Record):
     url = models.CharField(max_length=255, null=True, blank=True)
     twitter = models.CharField(max_length=255, null=True, blank=True)
@@ -546,6 +552,9 @@ class Organization(Record):
     type = models.CharField(max_length=20, choices=ORG_TYPE)
     nace_code = models.ForeignKey(NaceCode, on_delete=models.SET_NULL, null=True, blank=True)
     updated_at = models.DateField(null=True, auto_now=True)
+    data_types = models.ManyToManyField("AvailableDataType")
+    user = models.OneToOneField(User, null=True, blank=True, on_delete=models.CASCADE)
+    uuid = models.UUIDField(null=True) 
 
     def save(self, *args, **kwargs):
         self.slug = slugify(unidecode(self.name))

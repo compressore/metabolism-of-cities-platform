@@ -13,6 +13,8 @@ from django.forms import modelform_factory
 
 from core.mocfunctions import *
 
+import uuid
+
 # my_organizations returns the list of organizations that this user
 # is the admin for -- this is normally one, but could be several
 def my_organizations(request, id=None):
@@ -541,8 +543,56 @@ def admin_entity_user(request, organization, id, user=None):
 
 @login_required
 def admin_area(request):
+    my_organization = my_organizations(request)
+    info = None
+    if my_organization:
+        my_organization = my_organization[0]
+        info = my_organization
+        organization_list = Organization.objects_include_private.filter(
+            tags__parent_tag_id = TAG_ID["platformu_segments"],
+            tags__belongs_to = info,
+        )
+    else:
+        return redirect("platformu:create_my_organization")
+
+    if request.method == "POST":
+        info.description = request.POST["description"]
+        info.save()
+        info.data_types.clear()
+        if "Resources" in request.POST:
+            info.data_types.add(AvailableDataType.objects.get(pk=1))
+        if "Spaces" in request.POST:
+            info.data_types.add(AvailableDataType.objects.get(pk=2))
+        if "Technology" in request.POST:
+            info.data_types.add(AvailableDataType.objects.get(pk=3))
+        if "Staff" in request.POST:
+            info.data_types.add(AvailableDataType.objects.get(pk=4))
+        messages.success(request, "The information was saved.")
+
+    if "entity" in request.GET and "invite" in request.GET:
+        organization = Organization.objects.get(pk=request.GET["entity"])
+        if not organization.email:
+            messages.error(request, "There is no mail address provided for organization: "  + organization.name)
+        else:
+            email = organization.email
+            user = User()
+            user.is_superuser = False
+            user.is_staff = False
+            user.save()
+
+            organization.user = user
+            organization.uuid = uuid.uuid4()
+            organization.save()
+            ###Mail function will be added here
+
+            messages.success(request, "Invitation link was sent to: "+ organization.email)
+            return redirect("platformu:admin_area")
+
     context = {
         "page": "area",
+        "info": info,
+        "data_types": AvailableDataType.objects.all(),
+        "organization_list": organization_list,
     }
     return render(request, "metabolism_manager/admin/area.html", context)
 
